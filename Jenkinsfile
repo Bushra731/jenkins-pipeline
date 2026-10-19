@@ -22,8 +22,7 @@ pipeline {
                 sh 'python3 f1.py'
                 sh 'docker build -t $IMAGE_NAME:$BUILD_NUMBER -t $IMAGE_NAME:latest .'
                 sh 'docker images | grep $IMAGE_NAME'
-                sh 'docker save $IMAGE_NAME:latest | gzip > myapp.tar.gz'
-                stash name: 'app', includes: 'myapp.tar.gz, *.py'
+                stash name: 'app', includes: '*.py, Dockerfile'
             }
         }
         stage('Deploy') {
@@ -32,7 +31,7 @@ pipeline {
                 echo 'Deploying to AWS EC2...'
                 unstash 'app'
                 sh '''
-                    gunzip -c myapp.tar.gz | docker load
+                    docker build -t $IMAGE_NAME:$BUILD_NUMBER -t $IMAGE_NAME:latest .
                     rm -rf /opt/myapp/*
                     cp *.py /opt/myapp/
                     docker run --rm $IMAGE_NAME:latest
